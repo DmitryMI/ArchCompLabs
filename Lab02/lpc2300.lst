@@ -830,9 +830,9 @@ ARM Macro Assembler    Page 13
   433 00000000         ;//     External Memory Controller Setup (EMC) ---------
                        ------------------------
   434 00000000         ;// <e> External Memory Controller Setup (EMC)
-  435 00000000 00000000 
+  435 00000000 00000001 
                        EMC_SETUP
-                               EQU              0
+                               EQU              1
   436 00000000         
   437 00000000         ;//   <h> EMC Control Register (EMCControl)
   438 00000000         ;//     <i> Controls operation of the memory controller
@@ -1192,7 +1192,7 @@ ARM Macro Assembler    Page 19
   639 00000058         
   640 00000058                 IF               (:LNOT:(:DEF:NO_CLOCK_SETUP)):L
 AND:(CLOCK_SETUP != 0)
-  641 00000058 E59F0104        LDR              R0, =SCB_BASE
+  641 00000058 E59F01A4        LDR              R0, =SCB_BASE
   642 0000005C E3A010AA        MOV              R1, #0xAA
   643 00000060 E3A02055        MOV              R2, #0x55
   644 00000064         
@@ -1242,7 +1242,7 @@ ARM Macro Assembler    Page 20
   678 000000AC E5903088 
                        M_N_Lock
                                LDR              R3, [R0, #PLLSTAT_OFS]
-  679 000000B0 E59F40B0        LDR              R4, =(PLLSTAT_M:OR:PLLSTAT_N)
+  679 000000B0 E59F4150        LDR              R4, =(PLLSTAT_M:OR:PLLSTAT_N)
   680 000000B4 E0033004        AND              R3, R3, R4
   681 000000B8 E3A0400B        LDR              R4, =PLLCFG_Val
   682 000000BC E0333004        EORS             R3, R3, R4
@@ -1269,7 +1269,7 @@ C)
   702 000000EC E580108C        STR              R1, [R0, #PLLFEED_OFS]
   703 000000F0 E580208C        STR              R2, [R0, #PLLFEED_OFS]
   704 000000F4         
-  705 000000F4 E59F4070        LDR              R4, =PCONP_Val ; Enable Periphe
+  705 000000F4 E59F4110        LDR              R4, =PCONP_Val ; Enable Periphe
                                                             ral Clocks
   706 000000F8 E58040C4        STR              R4, [R0, #PCONP_OFS]
   707 000000FC                 ENDIF                        ; CLOCK_SETUP
@@ -1279,7 +1279,7 @@ C)
                        ------------------------
   711 000000FC         
   712 000000FC                 IF               MAM_SETUP != 0
-  713 000000FC E59F0060        LDR              R0, =MAM_BASE
+  713 000000FC E59F0100        LDR              R0, =MAM_BASE
   714 00000100 E3A01004        MOV              R1, #MAMTIM_Val
   715 00000104 E5801004        STR              R1, [R0, #MAMTIM_OFS]
   716 00000108 E3A01002        MOV              R1, #MAMCR_Val
@@ -1290,99 +1290,173 @@ C)
   721 00000110         ; Setup External Memory Controller ---------------------
                        ------------------------
   722 00000110         
-  723 00000110                 IF               (:DEF:NO_EMC_SETUP):LAND:(EMC_S
-ETUP != 0)
-  792                          ENDIF                        ; EMC_SETUP
-  793 00000110         
-  794 00000110         
-  795 00000110         ; Copy Exception Vectors to Internal RAM ---------------
-                       ------------------------
-  796 00000110         
+  723 00000110                 IF               (:DEF:NO_EMC_SETUP):LOR:(EMC_SE
+TUP != 0)
+  724 00000110 E59F00F8        LDR              R0, =EMC_BASE
+  725 00000114 E59F10E8        LDR              R1, =SCB_BASE
+  726 00000118 E59F20F4        LDR              R2, =PCB_BASE
+  727 0000011C         
+  728 0000011C E59140C4        LDR              R4, [R1, #PCONP_OFS]
+  729 00000120 E3844B02        ORR              R4, R4, #EMC_PCONP_Const 
 
 
 
 ARM Macro Assembler    Page 21 
 
 
-  797 00000110                 IF               :DEF:RAM_INTVEC
-  804                          ENDIF
-  805 00000110         
-  806 00000110         
-  807 00000110         ; Memory Mapping (when Interrupt Vectors are in RAM) ---
-                       ------------------------
-  808 00000110         
-  809 00000110 E01FC040 
-                       MEMMAP  EQU              0xE01FC040  ; Memory Mapping Co
-                                                            ntrol
-  810 00000110                 IF               :DEF:REMAP
-  820                          ENDIF
-  821 00000110         
-  822 00000110         
-  823 00000110         ; Setup Stack for each mode ----------------------------
-                       ------------------------
-  824 00000110         
-  825 00000110 E59F0058        LDR              R0, =Stack_Top
-  826 00000114         
-  827 00000114         ;  Enter Undefined Instruction Mode and set its Stack Po
-                       inter
-  828 00000114 E321F0DB        MSR              CPSR_c, #Mode_UND:OR:I_Bit:OR:F
-_Bit
-  829 00000118 E1A0D000        MOV              SP, R0
-  830 0000011C E2400000        SUB              R0, R0, #UND_Stack_Size
-  831 00000120         
-  832 00000120         ;  Enter Abort Mode and set its Stack Pointer
-  833 00000120 E321F0D7        MSR              CPSR_c, #Mode_ABT:OR:I_Bit:OR:F
-_Bit
-  834 00000124 E1A0D000        MOV              SP, R0
-  835 00000128 E2400000        SUB              R0, R0, #ABT_Stack_Size
-  836 0000012C         
-  837 0000012C         ;  Enter FIQ Mode and set its Stack Pointer
-  838 0000012C E321F0D1        MSR              CPSR_c, #Mode_FIQ:OR:I_Bit:OR:F
-_Bit
-  839 00000130 E1A0D000        MOV              SP, R0
-  840 00000134 E2400000        SUB              R0, R0, #FIQ_Stack_Size
-  841 00000138         
-  842 00000138         ;  Enter IRQ Mode and set its Stack Pointer
-  843 00000138 E321F0D2        MSR              CPSR_c, #Mode_IRQ:OR:I_Bit:OR:F
-_Bit
-  844 0000013C E1A0D000        MOV              SP, R0
-  845 00000140 E2400C01        SUB              R0, R0, #IRQ_Stack_Size
-  846 00000144         
-  847 00000144         ;  Enter Supervisor Mode and set its Stack Pointer
-  848 00000144 E321F0D3        MSR              CPSR_c, #Mode_SVC:OR:I_Bit:OR:F
-_Bit
-  849 00000148 E1A0D000        MOV              SP, R0
-  850 0000014C E2400008        SUB              R0, R0, #SVC_Stack_Size
-  851 00000150         
-  852 00000150         ;  Enter User Mode and set its Stack Pointer
-  853 00000150 E321F010        MSR              CPSR_c, #Mode_USR
-  854 00000154                 IF               :DEF:__MICROLIB
-  859 00000154         
-  860 00000154 E1A0D000        MOV              SP, R0
-  861 00000158 E24DAB01        SUB              SL, SP, #USR_Stack_Size
-  862 0000015C         
-  863 0000015C                 ENDIF
-  864 0000015C         
+                                                            ; Enable EMC clock
+  730 00000124 E58140C4        STR              R4, [R1, #PCONP_OFS]
+  731 00000128         
+  732 00000128 E3A04001        LDR              R4, =EMC_CTRL_Val
+  733 0000012C E5804000        STR              R4, [R0, #EMC_CTRL_OFS]
+  734 00000130 E3A04000        LDR              R4, =EMC_CONFIG_Val
+  735 00000134 E5804008        STR              R4, [R0, #EMC_CONFIG_OFS]
+  736 00000138         
+  737 00000138         ;  Setup pin functions for External Bus functionality
+  738 00000138 E59F40D8        LDR              R4, =EMC_PINSEL6_Val
+  739 0000013C E5824018        STR              R4, [R2, #PINSEL6_OFS]
+  740 00000140 E59F40D4        LDR              R4, =EMC_PINSEL8_Val
+  741 00000144 E5824020        STR              R4, [R2, #PINSEL8_OFS]
+  742 00000148 E59F40D0        LDR              R4, =EMC_PINSEL9_Val
+  743 0000014C E5824024        STR              R4, [R2, #PINSEL9_OFS]
+  744 00000150         
+  745 00000150 E59F60CC        LDR              R6, =1200000 ; Number of cycles
+                                                             to delay
+  746 00000154 E2566001 
+                       Wait_0  SUBS             R6, R6, #1  ; Delay ~100 ms @ p
+                                                            roc clk 48 MHz
+  747 00000158 1AFFFFFD        BNE              Wait_0
+  748 0000015C         
+  749 0000015C                 IF               (EMC_STACS0_SETUP != 0)
+  750 0000015C E3A04000        LDR              R4, =EMC_STA_CFG0_Val
+  751 00000160 E5804200        STR              R4, [R0, #EMC_STA_CFG0_OFS]
+  752 00000164 E3A04002        LDR              R4, =EMC_STA_WWEN0_Val
+  753 00000168 E5804204        STR              R4, [R0, #EMC_STA_WWEN0_OFS]
+  754 0000016C E3A04002        LDR              R4, =EMC_STA_WOEN0_Val
+  755 00000170 E5804208        STR              R4, [R0, #EMC_STA_WOEN0_OFS]
+  756 00000174 E3A0401F        LDR              R4, =EMC_STA_WRD0_Val
+  757 00000178 E580420C        STR              R4, [R0, #EMC_STA_WRD0_OFS]
+  758 0000017C E3A0401F        LDR              R4, =EMC_STA_WPAGE0_Val
+  759 00000180 E5804210        STR              R4, [R0, #EMC_STA_WPAGE0_OFS]
+  760 00000184 E3A0401F        LDR              R4, =EMC_STA_WWR0_Val
+  761 00000188 E5804214        STR              R4, [R0, #EMC_STA_WWR0_OFS]
+  762 0000018C E3A0400F        LDR              R4, =EMC_STA_WTURN0_Val
+  763 00000190 E5804218        STR              R4, [R0, #EMC_STA_WTURN0_OFS]
+  764 00000194                 ENDIF
+  765 00000194         
+  766 00000194                 IF               (EMC_STACS1_SETUP != 0)
+  781                          ENDIF
+  782 00000194         
+  783 00000194 E59F608C        LDR              R6, =120000 ; Number of cycles 
+                                                            to delay
+  784 00000198 E2566001 
+                       Wait_1  SUBS             R6, R6, #1  ; Delay ~10 ms @ pr
+                                                            oc clk 48 MHz
+  785 0000019C 1AFFFFFD        BNE              Wait_1
+  786 000001A0         
+  787 000001A0 E3A04000        LDR              R4, =EMC_STA_EXT_W_Val
+  788 000001A4 E3A05080        LDR              R5, =EMC_STA_EXT_W_OFS
+  789 000001A8 E0855000        ADD              R5, R5, R0
+  790 000001AC E5854000        STR              R4, [R5, #0]
+  791 000001B0         
+  792 000001B0                 ENDIF                        ; EMC_SETUP
+  793 000001B0         
+  794 000001B0         
+  795 000001B0         ; Copy Exception Vectors to Internal RAM ---------------
 
 
 
 ARM Macro Assembler    Page 22 
 
 
-  865 0000015C         
-  866 0000015C         ; Enter the C code -------------------------------------
                        ------------------------
-  867 0000015C         
-  868 0000015C                 IMPORT           __main
-  869 0000015C E59F0010        LDR              R0, =__main
-  870 00000160 E12FFF10        BX               R0
-  871 00000164         
-  872 00000164         
-  873 00000164                 IF               :DEF:__MICROLIB
-  879 00000164         ; User Initial Stack & Heap
-  880 00000164 E01FC000 
+  796 000001B0         
+  797 000001B0                 IF               :DEF:RAM_INTVEC
+  804                          ENDIF
+  805 000001B0         
+  806 000001B0         
+  807 000001B0         ; Memory Mapping (when Interrupt Vectors are in RAM) ---
+                       ------------------------
+  808 000001B0         
+  809 000001B0 E01FC040 
+                       MEMMAP  EQU              0xE01FC040  ; Memory Mapping Co
+                                                            ntrol
+  810 000001B0                 IF               :DEF:REMAP
+  820                          ENDIF
+  821 000001B0         
+  822 000001B0         
+  823 000001B0         ; Setup Stack for each mode ----------------------------
+                       ------------------------
+  824 000001B0         
+  825 000001B0 E59F0074        LDR              R0, =Stack_Top
+  826 000001B4         
+  827 000001B4         ;  Enter Undefined Instruction Mode and set its Stack Po
+                       inter
+  828 000001B4 E321F0DB        MSR              CPSR_c, #Mode_UND:OR:I_Bit:OR:F
+_Bit
+  829 000001B8 E1A0D000        MOV              SP, R0
+  830 000001BC E2400000        SUB              R0, R0, #UND_Stack_Size
+  831 000001C0         
+  832 000001C0         ;  Enter Abort Mode and set its Stack Pointer
+  833 000001C0 E321F0D7        MSR              CPSR_c, #Mode_ABT:OR:I_Bit:OR:F
+_Bit
+  834 000001C4 E1A0D000        MOV              SP, R0
+  835 000001C8 E2400000        SUB              R0, R0, #ABT_Stack_Size
+  836 000001CC         
+  837 000001CC         ;  Enter FIQ Mode and set its Stack Pointer
+  838 000001CC E321F0D1        MSR              CPSR_c, #Mode_FIQ:OR:I_Bit:OR:F
+_Bit
+  839 000001D0 E1A0D000        MOV              SP, R0
+  840 000001D4 E2400000        SUB              R0, R0, #FIQ_Stack_Size
+  841 000001D8         
+  842 000001D8         ;  Enter IRQ Mode and set its Stack Pointer
+  843 000001D8 E321F0D2        MSR              CPSR_c, #Mode_IRQ:OR:I_Bit:OR:F
+_Bit
+  844 000001DC E1A0D000        MOV              SP, R0
+  845 000001E0 E2400C01        SUB              R0, R0, #IRQ_Stack_Size
+  846 000001E4         
+  847 000001E4         ;  Enter Supervisor Mode and set its Stack Pointer
+  848 000001E4 E321F0D3        MSR              CPSR_c, #Mode_SVC:OR:I_Bit:OR:F
+_Bit
+  849 000001E8 E1A0D000        MOV              SP, R0
+  850 000001EC E2400008        SUB              R0, R0, #SVC_Stack_Size
+  851 000001F0         
+  852 000001F0         ;  Enter User Mode and set its Stack Pointer
+  853 000001F0 E321F010        MSR              CPSR_c, #Mode_USR
+  854 000001F4                 IF               :DEF:__MICROLIB
+  859 000001F4         
+  860 000001F4 E1A0D000        MOV              SP, R0
+  861 000001F8 E24DAB01        SUB              SL, SP, #USR_Stack_Size
+  862 000001FC         
+
+
+
+ARM Macro Assembler    Page 23 
+
+
+  863 000001FC                 ENDIF
+  864 000001FC         
+  865 000001FC         
+  866 000001FC         ; Enter the C code -------------------------------------
+                       ------------------------
+  867 000001FC         
+  868 000001FC                 IMPORT           __main
+  869 000001FC E59F002C        LDR              R0, =__main
+  870 00000200 E12FFF10        BX               R0
+  871 00000204         
+  872 00000204         
+  873 00000204                 IF               :DEF:__MICROLIB
+  879 00000204         ; User Initial Stack & Heap
+  880 00000204 E01FC000 
               00FF7FFF 
               04280FDE 
+              FFE08000 
+              E002C000 
+              00005555 
+              55555555 
+              50090000 
+              00124F80 
+              0001D4C0 
               00000000 
               00000000         AREA             |.text|, CODE, READONLY
   881 00000000         
@@ -1406,7 +1480,7 @@ e)
               00000000 
 Command Line: --debug --xref --apcs=interwork --depend=.\lpc2300.d -o.\lpc2300.
 o -IC:\Keil\ARM\RV31\INC -IC:\Keil\ARM\CMSIS\Include -IC:\Keil\ARM\Inc\Philips 
---predefine="NO_EMC_SETUP SETA 1" --list=.\lpc2300.lst LPC2300.s
+--list=.\lpc2300.lst LPC2300.s
 
 
 
@@ -1664,7 +1738,23 @@ Symbol: Vectors
    Uses
       None
 Comment: Vectors unused
-19 symbols
+Wait_0 00000154
+
+Symbol: Wait_0
+   Definitions
+      At line 746 in file LPC2300.s
+   Uses
+      At line 747 in file LPC2300.s
+Comment: Wait_0 used once
+Wait_1 00000198
+
+Symbol: Wait_1
+   Definitions
+      At line 784 in file LPC2300.s
+   Uses
+      At line 785 in file LPC2300.s
+Comment: Wait_1 used once
+21 symbols
 
 
 
@@ -1764,56 +1854,56 @@ Symbol: EMC_BASE
    Definitions
       At line 403 in file LPC2300.s
    Uses
-      None
-Comment: EMC_BASE unused
+      At line 724 in file LPC2300.s
+Comment: EMC_BASE used once
 EMC_CONFIG_OFS 00000008
 
 Symbol: EMC_CONFIG_OFS
    Definitions
       At line 407 in file LPC2300.s
    Uses
-      None
-Comment: EMC_CONFIG_OFS unused
+      At line 735 in file LPC2300.s
+Comment: EMC_CONFIG_OFS used once
 EMC_CONFIG_Val 00000000
 
 Symbol: EMC_CONFIG_Val
    Definitions
       At line 450 in file LPC2300.s
    Uses
-      None
-Comment: EMC_CONFIG_Val unused
+      At line 734 in file LPC2300.s
+Comment: EMC_CONFIG_Val used once
 EMC_CTRL_OFS 00000000
 
 Symbol: EMC_CTRL_OFS
    Definitions
       At line 405 in file LPC2300.s
    Uses
-      None
-Comment: EMC_CTRL_OFS unused
+      At line 733 in file LPC2300.s
+Comment: EMC_CTRL_OFS used once
 EMC_CTRL_Val 00000001
 
 Symbol: EMC_CTRL_Val
    Definitions
       At line 443 in file LPC2300.s
    Uses
-      None
-Comment: EMC_CTRL_Val unused
+      At line 732 in file LPC2300.s
+Comment: EMC_CTRL_Val used once
 EMC_PCONP_Const 00000800
 
 Symbol: EMC_PCONP_Const
    Definitions
       At line 425 in file LPC2300.s
    Uses
-      None
-Comment: EMC_PCONP_Const unused
+      At line 729 in file LPC2300.s
+Comment: EMC_PCONP_Const used once
 EMC_PINSEL6_Val 00005555
 
 Symbol: EMC_PINSEL6_Val
    Definitions
       At line 429 in file LPC2300.s
    Uses
-      None
-Comment: EMC_PINSEL6_Val unused
+      At line 738 in file LPC2300.s
+Comment: EMC_PINSEL6_Val used once
 EMC_PINSEL8_Val 55555555
 
 Symbol: EMC_PINSEL8_Val
@@ -1826,17 +1916,17 @@ Absolute symbols
 
       At line 430 in file LPC2300.s
    Uses
-      None
-Comment: EMC_PINSEL8_Val unused
+      At line 740 in file LPC2300.s
+Comment: EMC_PINSEL8_Val used once
 EMC_PINSEL9_Val 50090000
 
 Symbol: EMC_PINSEL9_Val
    Definitions
       At line 431 in file LPC2300.s
    Uses
-      None
-Comment: EMC_PINSEL9_Val unused
-EMC_SETUP 00000000
+      At line 742 in file LPC2300.s
+Comment: EMC_PINSEL9_Val used once
+EMC_SETUP 00000001
 
 Symbol: EMC_SETUP
    Definitions
@@ -1850,16 +1940,16 @@ Symbol: EMC_STACS0_SETUP
    Definitions
       At line 454 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STACS0_SETUP unused
+      At line 749 in file LPC2300.s
+Comment: EMC_STACS0_SETUP used once
 EMC_STACS1_SETUP 00000000
 
 Symbol: EMC_STACS1_SETUP
    Definitions
       At line 518 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STACS1_SETUP unused
+      At line 766 in file LPC2300.s
+Comment: EMC_STACS1_SETUP used once
 EMC_STAT_OFS 00000004
 
 Symbol: EMC_STAT_OFS
@@ -1874,22 +1964,22 @@ Symbol: EMC_STA_CFG0_OFS
    Definitions
       At line 408 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_CFG0_OFS unused
+      At line 751 in file LPC2300.s
+Comment: EMC_STA_CFG0_OFS used once
 EMC_STA_CFG0_Val 00000000
 
 Symbol: EMC_STA_CFG0_Val
    Definitions
       At line 470 in file LPC2300.s
    Uses
-      None
+      At line 750 in file LPC2300.s
 
 
 
 ARM Macro Assembler    Page 4 Alphabetic symbol ordering
 Absolute symbols
 
-Comment: EMC_STA_CFG0_Val unused
+Comment: EMC_STA_CFG0_Val used once
 EMC_STA_CFG1_OFS 00000220
 
 Symbol: EMC_STA_CFG1_OFS
@@ -1912,32 +2002,32 @@ Symbol: EMC_STA_EXT_W_OFS
    Definitions
       At line 422 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_EXT_W_OFS unused
+      At line 788 in file LPC2300.s
+Comment: EMC_STA_EXT_W_OFS used once
 EMC_STA_EXT_W_Val 00000000
 
 Symbol: EMC_STA_EXT_W_Val
    Definitions
       At line 585 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_EXT_W_Val unused
+      At line 787 in file LPC2300.s
+Comment: EMC_STA_EXT_W_Val used once
 EMC_STA_WOEN0_OFS 00000208
 
 Symbol: EMC_STA_WOEN0_OFS
    Definitions
       At line 410 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WOEN0_OFS unused
+      At line 755 in file LPC2300.s
+Comment: EMC_STA_WOEN0_OFS used once
 EMC_STA_WOEN0_Val 00000002
 
 Symbol: EMC_STA_WOEN0_Val
    Definitions
       At line 484 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WOEN0_Val unused
+      At line 754 in file LPC2300.s
+Comment: EMC_STA_WOEN0_Val used once
 EMC_STA_WOEN1_OFS 00000228
 
 Symbol: EMC_STA_WOEN1_OFS
@@ -1966,16 +2056,16 @@ Symbol: EMC_STA_WPAGE0_OFS
    Definitions
       At line 412 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WPAGE0_OFS unused
+      At line 759 in file LPC2300.s
+Comment: EMC_STA_WPAGE0_OFS used once
 EMC_STA_WPAGE0_Val 0000001F
 
 Symbol: EMC_STA_WPAGE0_Val
    Definitions
       At line 498 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WPAGE0_Val unused
+      At line 758 in file LPC2300.s
+Comment: EMC_STA_WPAGE0_Val used once
 EMC_STA_WPAGE1_OFS 00000230
 
 Symbol: EMC_STA_WPAGE1_OFS
@@ -1998,16 +2088,16 @@ Symbol: EMC_STA_WRD0_OFS
    Definitions
       At line 411 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WRD0_OFS unused
+      At line 757 in file LPC2300.s
+Comment: EMC_STA_WRD0_OFS used once
 EMC_STA_WRD0_Val 0000001F
 
 Symbol: EMC_STA_WRD0_Val
    Definitions
       At line 491 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WRD0_Val unused
+      At line 756 in file LPC2300.s
+Comment: EMC_STA_WRD0_Val used once
 EMC_STA_WRD1_OFS 0000022C
 
 Symbol: EMC_STA_WRD1_OFS
@@ -2036,16 +2126,16 @@ Symbol: EMC_STA_WTURN0_OFS
    Definitions
       At line 414 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WTURN0_OFS unused
+      At line 763 in file LPC2300.s
+Comment: EMC_STA_WTURN0_OFS used once
 EMC_STA_WTURN0_Val 0000000F
 
 Symbol: EMC_STA_WTURN0_Val
    Definitions
       At line 512 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WTURN0_Val unused
+      At line 762 in file LPC2300.s
+Comment: EMC_STA_WTURN0_Val used once
 EMC_STA_WTURN1_OFS 00000238
 
 Symbol: EMC_STA_WTURN1_OFS
@@ -2068,16 +2158,16 @@ Symbol: EMC_STA_WWEN0_OFS
    Definitions
       At line 409 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WWEN0_OFS unused
+      At line 753 in file LPC2300.s
+Comment: EMC_STA_WWEN0_OFS used once
 EMC_STA_WWEN0_Val 00000002
 
 Symbol: EMC_STA_WWEN0_Val
    Definitions
       At line 477 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WWEN0_Val unused
+      At line 752 in file LPC2300.s
+Comment: EMC_STA_WWEN0_Val used once
 
 
 
@@ -2106,16 +2196,16 @@ Symbol: EMC_STA_WWR0_OFS
    Definitions
       At line 413 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WWR0_OFS unused
+      At line 761 in file LPC2300.s
+Comment: EMC_STA_WWR0_OFS used once
 EMC_STA_WWR0_Val 0000001F
 
 Symbol: EMC_STA_WWR0_Val
    Definitions
       At line 505 in file LPC2300.s
    Uses
-      None
-Comment: EMC_STA_WWR0_Val unused
+      At line 760 in file LPC2300.s
+Comment: EMC_STA_WWR0_Val used once
 EMC_STA_WWR1_OFS 00000234
 
 Symbol: EMC_STA_WWR1_OFS
@@ -2373,8 +2463,8 @@ Symbol: PCB_BASE
    Definitions
       At line 387 in file LPC2300.s
    Uses
-      None
-Comment: PCB_BASE unused
+      At line 726 in file LPC2300.s
+Comment: PCB_BASE used once
 PCLKSEL0_OFS 000001A8
 
 Symbol: PCLKSEL0_OFS
@@ -2420,7 +2510,9 @@ Symbol: PCONP_OFS
       At line 127 in file LPC2300.s
    Uses
       At line 706 in file LPC2300.s
-Comment: PCONP_OFS used once
+      At line 728 in file LPC2300.s
+      At line 730 in file LPC2300.s
+
 PCONP_Val 04280FDE
 
 Symbol: PCONP_Val
@@ -2466,14 +2558,14 @@ PINSEL2_OFS 00000008
 Symbol: PINSEL2_OFS
    Definitions
       At line 390 in file LPC2300.s
-   Uses
-      None
 
 
 
 ARM Macro Assembler    Page 13 Alphabetic symbol ordering
 Absolute symbols
 
+   Uses
+      None
 Comment: PINSEL2_OFS unused
 PINSEL3_OFS 0000000C
 
@@ -2505,8 +2597,8 @@ Symbol: PINSEL6_OFS
    Definitions
       At line 394 in file LPC2300.s
    Uses
-      None
-Comment: PINSEL6_OFS unused
+      At line 739 in file LPC2300.s
+Comment: PINSEL6_OFS used once
 PINSEL7_OFS 0000001C
 
 Symbol: PINSEL7_OFS
@@ -2521,23 +2613,23 @@ Symbol: PINSEL8_OFS
    Definitions
       At line 396 in file LPC2300.s
    Uses
-      None
-Comment: PINSEL8_OFS unused
+      At line 741 in file LPC2300.s
+Comment: PINSEL8_OFS used once
 PINSEL9_OFS 00000024
 
 Symbol: PINSEL9_OFS
    Definitions
       At line 397 in file LPC2300.s
    Uses
-      None
-Comment: PINSEL9_OFS unused
-PLLCFG_OFS 00000084
-
+      At line 743 in file LPC2300.s
+Comment: PINSEL9_OFS used once
 
 
 
 ARM Macro Assembler    Page 14 Alphabetic symbol ordering
 Absolute symbols
+
+PLLCFG_OFS 00000084
 
 Symbol: PLLCFG_OFS
    Definitions
@@ -2596,14 +2688,14 @@ Symbol: PLLFEED_OFS
 PLLSTAT_M 00007FFF
 
 Symbol: PLLSTAT_M
-   Definitions
-      At line 135 in file LPC2300.s
 
 
 
 ARM Macro Assembler    Page 15 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 135 in file LPC2300.s
    Uses
       At line 679 in file LPC2300.s
 Comment: PLLSTAT_M used once
@@ -2647,7 +2739,8 @@ Symbol: SCB_BASE
       At line 114 in file LPC2300.s
    Uses
       At line 641 in file LPC2300.s
-Comment: SCB_BASE used once
+      At line 725 in file LPC2300.s
+
 SCS_OFS 000001A0
 
 Symbol: SCS_OFS
@@ -2660,15 +2753,15 @@ Symbol: SCS_OFS
 SCS_Val 00000020
 
 Symbol: SCS_Val
-   Definitions
-      At line 354 in file LPC2300.s
-   Uses
 
 
 
 ARM Macro Assembler    Page 16 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 354 in file LPC2300.s
+   Uses
       At line 646 in file LPC2300.s
       At line 649 in file LPC2300.s
 
@@ -2725,15 +2818,15 @@ Comment: USBCLKCFG_Val used once
 USR_Stack_Size 00000400
 
 Symbol: USR_Stack_Size
-   Definitions
-      At line 87 in file LPC2300.s
-   Uses
 
 
 
 ARM Macro Assembler    Page 17 Alphabetic symbol ordering
 Absolute symbols
 
+   Definitions
+      At line 87 in file LPC2300.s
+   Uses
       At line 94 in file LPC2300.s
       At line 861 in file LPC2300.s
       At line 887 in file LPC2300.s
@@ -2762,4 +2855,4 @@ Symbol: __use_two_region_memory
       None
 Comment: __use_two_region_memory unused
 2 symbols
-493 symbols in table
+496 symbols in table

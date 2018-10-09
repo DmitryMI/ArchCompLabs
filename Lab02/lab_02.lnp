@@ -1,0 +1,8 @@
+--cpu ARM7TDMI
+".\lpc2300.o"
+".\main.o"
+".\controller.o"
+--strict --scatter ".\lab_02.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\lab_02.map" -o .\lab_02.axf
