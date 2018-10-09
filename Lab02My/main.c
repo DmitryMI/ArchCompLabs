@@ -5,6 +5,9 @@ heating elements. Functioning program:
 2) Pushing button turns oven off
 */
 
+// LPC2300.s EMC_SETPU EQU 1. Line 435 - changed to make project to 
+// work in emulation
+
 #include <LPC23xx.H>
 #include "controller.h"
 
@@ -14,23 +17,62 @@ heating elements. Functioning program:
 #define HEATER3_PIN 0x8000000 // Third heater
 #define BUTTON_PIN 0x4000000 // Button
 
+struct tm1638 tm;
+
 // Describes binary pin state
 enum pin_state
 {
 	ENABLED = 1, DISABLED = 0
 };
 
+void set_led_enabled(int led_num, int enabled)
+{	
+	int n = led_num * 2 + 1;
+	tm1638_setadr(&tm, n);
+	
+	if(enabled)		
+		tm1638_sendbyte(&tm, n);
+	else
+		tm1638_sendbyte(&tm, 0);
+}
+
+int read_key_state()
+{
+	tm1638_setadr(&tm, 0);
+	tm1638_sendcmd(&tm, 0x46); // Sending READ Command
+	
+	return tm1638_receivebyte(&tm) & (1); // We need only first button (SEG1)
+}
+
 // Sets state of selceted pin (or several pins)
 void turn_heater(int heater_pin, enum pin_state state)
 {
+	int led_num;
+	switch(heater_pin)
+	{
+		case HEATER1_PIN:
+			led_num = 0;
+			break;
+		case HEATER2_PIN:
+			led_num = 1;
+			break;
+		case HEATER3_PIN:
+			led_num = 2;
+			break;
+		
+		default: led_num = 0;
+	}
+	
 	switch(state)
 	{
 		case ENABLED:
-			IOSET0 = heater_pin;
+			//IOSET0 = heater_pin;
+			set_led_enabled(led_num, 1);
 			break;
 		
 		case DISABLED:
-			IOCLR0 = heater_pin;
+			//IOCLR0 = heater_pin;
+			set_led_enabled(led_num, 0);
 			break;
 	}
 }
@@ -44,7 +86,7 @@ enum pin_state read_pin(int pin)
 }
 
 int main(void)
-{
+{	
 	// Variable to contain previous state of a button
 	enum pin_state prev_button_state;
 	
@@ -62,11 +104,16 @@ int main(void)
 	// Current active heater pin
 	int current_heater = HEATER1_PIN;
 	
-	// Set controll to General Purpose Input/Outpu
+	/*// Set controll to General Purpose Input/Outpu
 	PINSEL0 = 0;
 	
 	/// Set output direction for heaters' pins
-	IODIR0 = OUTPUT_PINS;
+	IODIR0 = OUTPUT_PINS;*/
+	
+	tm.STB = 26;
+	tm.CLK = 27;
+	tm.DIO = 28;
+	tm1638_init(&tm);
 
 	while(1)
 	{
