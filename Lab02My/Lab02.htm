@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Lab02.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Lab02.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5.03 [Build 76]: Last Updated: Tue Oct 09 15:33:34 2018
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5.03 [Build 76]: Last Updated: Fri Oct 12 11:05:15 2018
 <BR><P>
 <H3>Maximum Stack Usage =         76 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -189,8 +189,10 @@ Global Symbols
 <LI><a href="#[1c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_sendcmd
 </UL>
 
-<P><STRONG><a name="[1b]"></a>tm1638_receivebyte</STRONG> (ARM, 148 bytes, Stack size 20 bytes, controller.o(.text), UNUSED)
-<BR><BR>[Calls]<UL><LI><a href="#[1a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;delay
+<P><STRONG><a name="[1b]"></a>tm1638_receivebyte</STRONG> (ARM, 148 bytes, Stack size 20 bytes, controller.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = tm1638_receivebyte
+</UL>
+<BR>[Calls]<UL><LI><a href="#[1a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;delay
 </UL>
 <BR>[Called By]<UL><LI><a href="#[20]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;read_key_state
 </UL>
@@ -210,8 +212,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_sendcmd
 </UL>
-<BR>[Called By]<UL><LI><a href="#[20]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;read_key_state
-<LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_led_enabled
+<BR>[Called By]<UL><LI><a href="#[1f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_led_enabled
 <LI><a href="#[1e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_init
 </UL>
 
@@ -234,10 +235,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[21]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;turn_heater
 </UL>
 
-<P><STRONG><a name="[20]"></a>read_key_state</STRONG> (ARM, 48 bytes, Stack size 8 bytes, main.o(.text), UNUSED)
-<BR><BR>[Calls]<UL><LI><a href="#[1d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_setadr
-<LI><a href="#[1c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_sendcmd
+<P><STRONG><a name="[20]"></a>read_key_state</STRONG> (ARM, 44 bytes, Stack size 8 bytes, main.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = read_key_state &rArr; tm1638_sendcmd &rArr; tm1638_sendbyte
+</UL>
+<BR>[Calls]<UL><LI><a href="#[1c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_sendcmd
 <LI><a href="#[1b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;tm1638_receivebyte
+</UL>
+<BR>[Called By]<UL><LI><a href="#[22]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;read_pin
 </UL>
 
 <P><STRONG><a name="[21]"></a>turn_heater</STRONG> (ARM, 148 bytes, Stack size 16 bytes, main.o(.text))
@@ -248,11 +252,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[22]"></a>read_pin</STRONG> (ARM, 36 bytes, Stack size 0 bytes, main.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<P><STRONG><a name="[22]"></a>read_pin</STRONG> (ARM, 40 bytes, Stack size 8 bytes, main.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = read_pin &rArr; read_key_state &rArr; tm1638_sendcmd &rArr; tm1638_sendbyte
+</UL>
+<BR>[Calls]<UL><LI><a href="#[20]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;read_key_state
+</UL>
+<BR>[Called By]<UL><LI><a href="#[a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[a]"></a>main</STRONG> (ARM, 264 bytes, Stack size 0 bytes, main.o(.text))
+<P><STRONG><a name="[a]"></a>main</STRONG> (ARM, 300 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 76<LI>Call Chain = main &rArr; turn_heater &rArr; set_led_enabled &rArr; tm1638_setadr &rArr; tm1638_sendcmd &rArr; tm1638_sendbyte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[22]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;read_pin

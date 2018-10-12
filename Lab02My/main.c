@@ -38,10 +38,11 @@ void set_led_enabled(int led_num, int enabled)
 
 int read_key_state()
 {
-	tm1638_setadr(&tm, 0);
+	int received = 0;
 	tm1638_sendcmd(&tm, 0x46); // Sending READ Command
 	
-	return tm1638_receivebyte(&tm) & (1); // We need only first button (SEG1)
+	received = tm1638_receivebyte(&tm);
+	return received; // We need only first button (SEG1)
 }
 
 // Sets state of selceted pin (or several pins)
@@ -66,12 +67,10 @@ void turn_heater(int heater_pin, enum pin_state state)
 	switch(state)
 	{
 		case ENABLED:
-			//IOSET0 = heater_pin;
 			set_led_enabled(led_num, 1);
 			break;
 		
 		case DISABLED:
-			//IOCLR0 = heater_pin;
 			set_led_enabled(led_num, 0);
 			break;
 	}
@@ -80,8 +79,9 @@ void turn_heater(int heater_pin, enum pin_state state)
 // Reads state of selected pin
 enum pin_state read_pin(int pin)
 {
-	if((IOPIN0 & pin) != 0)
+	if((read_key_state() & 1) != 0)
 		return ENABLED;
+	
 	return DISABLED;
 }
 
@@ -99,26 +99,30 @@ int main(void)
 	int current_tick = 0;
 	
 	// Time to switch heater
-	int cycle_tick_count = 1000000; // ~~ 1 second
+	int cycle_tick_count = 1; // ~~ 1 second 1000000
 	
 	// Current active heater pin
 	int current_heater = HEATER1_PIN;
 	
-	/*// Set controll to General Purpose Input/Outpu
-	PINSEL0 = 0;
-	
-	/// Set output direction for heaters' pins
-	IODIR0 = OUTPUT_PINS;*/
-	
 	tm.STB = 26;
 	tm.CLK = 27;
 	tm.DIO = 28;
+	
 	tm1638_init(&tm);
+
+// Turning off all LEDS
+		turn_heater(HEATER1_PIN, DISABLED);
+		turn_heater(HEATER2_PIN, DISABLED);
+		turn_heater(HEATER3_PIN, DISABLED);
 
 	while(1)
 	{
 		// Checking button
-		enum pin_state button_state = read_pin(BUTTON_PIN);			
+		enum pin_state button_state = read_pin(BUTTON_PIN);	
+		
+		
+		//button_state = DISABLED; // FIXME
+		
 		if(button_state == DISABLED && prev_button_state == ENABLED)
 		{
 			// Switching device state
