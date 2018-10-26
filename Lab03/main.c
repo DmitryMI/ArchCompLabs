@@ -134,7 +134,7 @@ int main(void)
 #if USE_TM
 	int cycle_tick_count = 1; // ~~ 1 second 1000000
 #else
-	int cycle_tick_count = 20000;
+	int cycle_tick_count = 5405;
 #endif
 	
 	// Current active heater pin
@@ -167,6 +167,9 @@ int main(void)
 	turn_heater(HEATER3_PIN, DISABLED);
 	
 	T0MR0 = cycle_tick_count;
+	
+	PCLKSEL0 = 0;
+	PCLKSEL1 = 1;
 	
 	while(1)
 	{

@@ -605,9 +605,9 @@ ARM Macro Assembler    Page 10
   355 00000000 00000001 
                        CLKSRCSEL_Val
                                EQU              0x00000001
-  356 00000000 0000000B 
+  356 00000000 00000003 
                        PLLCFG_Val
-                               EQU              0x0000000B
+                               EQU              0x00000003
   357 00000000 00000005 
                        CCLKCFG_Val
                                EQU              0x00000005
@@ -1213,7 +1213,7 @@ AND:(CLOCK_SETUP != 0)
   655 00000078 E3A03001        LDR              R3, =CLKSRCSEL_Val ; Select PLL
                                                              source clock
   656 0000007C E580310C        STR              R3, [R0, #CLKSRCSEL_OFS]
-  657 00000080 E3A0300B        LDR              R3, =PLLCFG_Val
+  657 00000080 E3A03003        LDR              R3, =PLLCFG_Val
   658 00000084 E5803084        STR              R3, [R0, #PLLCFG_OFS]
   659 00000088 E580108C        STR              R1, [R0, #PLLFEED_OFS]
   660 0000008C E580208C        STR              R2, [R0, #PLLFEED_OFS]
@@ -1244,7 +1244,7 @@ ARM Macro Assembler    Page 20
                                LDR              R3, [R0, #PLLSTAT_OFS]
   679 000000B0 E59F40B0        LDR              R4, =(PLLSTAT_M:OR:PLLSTAT_N)
   680 000000B4 E0033004        AND              R3, R3, R4
-  681 000000B8 E3A0400B        LDR              R4, =PLLCFG_Val
+  681 000000B8 E3A04003        LDR              R4, =PLLCFG_Val
   682 000000BC E0333004        EORS             R3, R3, R4
   683 000000C0 1AFFFFF9        BNE              M_N_Lock
   684 000000C4         
@@ -2545,7 +2545,7 @@ Symbol: PLLCFG_OFS
    Uses
       At line 658 in file LPC2300.s
 Comment: PLLCFG_OFS used once
-PLLCFG_Val 0000000B
+PLLCFG_Val 00000003
 
 Symbol: PLLCFG_Val
    Definitions
